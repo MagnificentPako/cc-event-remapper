@@ -1,1 +1,37 @@
+local map = {}
 
+function addRemap(expected,modifier)
+	map[expected] = modifier
+end
+
+function removeRemap(expected)
+	map[expected] = nil
+end
+
+function pullEvent(filter)
+	local evt = {os.pullEventRaw(filter or nil)}
+	for k,v in pairs(map) do
+		if(k[1] == evt[1]) then --The same event type
+			local fits = true
+			for i = 2,#evt-1 do
+				if(k[i] == nil or k[i] == evt[i]) then
+				else
+					fits = false
+					break
+				end
+			end
+			if(fits) then
+				e = v(evt)
+				if(e[1] == "terminate") then
+					error("Terminated",0)
+				end
+				return unpack(e)
+			end
+		end
+	end
+	return unpack(evt)
+end
+
+function inject()
+	os.pullEvent = pullEvent
+end
